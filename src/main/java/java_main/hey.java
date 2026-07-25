@@ -1,4 +1,4 @@
-package java;
+package java_main;
 
 public class hey {
 

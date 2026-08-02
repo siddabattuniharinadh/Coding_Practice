@@ -1,72 +1,55 @@
 package java_test;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-/**
- * Add2Numbers - Demonstrates adding all types of numbers (Integers, decimals, etc.)
- *
- * Features:
- *  1. Takes inputs dynamically from the user using Scanner
- *  2. Supports all number types: int, long, float, double, BigDecimal
- *  3. Auto-detects whether an input is an integer or a decimal
- *  4. Uses smart type promotion when adding mixed types
- *  5. Handles invalid input gracefully
- */
-public class Add2Numbers {
-
-    public static void main(String[] args) {
-        try (Scanner scanner = new Scanner(System.in)) {
-
+public class Add2Numbers 
+{
+    public static void main(String[] args) 
+    {
+        try (Scanner scanner = new Scanner(System.in)) 
+        {
             System.out.println("========================================");
             System.out.println("  ADD NUMBERS - ALL NUMBER TYPES SUPPORTED");
             System.out.println("========================================");
-
             // 1) Take inputs dynamically from the user
             System.out.print("How many numbers do you want to add? ");
             int count = readValidCount(scanner);
-
             List<String> rawInputs = new ArrayList<>();
-            for (int i = 1; i <= count; i++) {
+            for (int i = 1; i <= count; i++) 
+            {
                 System.out.print("Enter number #" + i + " (int, long, float, double, decimal): ");
                 rawInputs.add(scanner.next().trim());
             }
-
             // 2) Process each input: classify and add all types of numbers
             Number sum = addAllNumbers(rawInputs);
-
             // Display the numbers entered
             System.out.println("\nNumbers entered:");
-            for (String raw : rawInputs) {
+            for (String raw : rawInputs) 
+            {
                 System.out.println("  -> " + raw);
             }
-
-            System.out.println("\n----------------------------------------");
-            System.out.println("SUM  = " + sum);
-            System.out.println("----------------------------------------");
-            System.out.println("Sum type     : " + sum.getClass().getSimpleName());
-            System.out.println("Integer sum? : " + (sum instanceof Integer || sum instanceof Long));
-            System.out.println("Decimal sum? : " + (sum instanceof Float || sum instanceof Double || sum instanceof BigDecimal));
-
-        } catch (Exception e) {
+            printFormattedResult(sum);
+        } 
+        catch (Exception e) 
+        {
             System.err.println("Unexpected error: " + e.getMessage());
         }
     }
-
-    /**
-     * Reads a valid positive integer count from the user.
-     */
-    private static int readValidCount(Scanner scanner) {
-        while (!scanner.hasNextInt()) {
+    private static int readValidCount(Scanner scanner) 
+    {
+        while (!scanner.hasNextInt()) 
+        {
             System.out.print("That's not a valid number. Please enter a whole number: ");
             scanner.next();
         }
         int count = scanner.nextInt();
-        while (count <= 0) {
+        while (count <= 0) 
+        {
             System.out.print("Count must be greater than 0. Please re-enter: ");
-            while (!scanner.hasNextInt()) {
+            while (!scanner.hasNextInt()) 
+            {
                 System.out.print("That's not a valid number. Please enter a whole number: ");
                 scanner.next();
             }
@@ -74,216 +57,205 @@ public class Add2Numbers {
         }
         return count;
     }
-
-    /**
-     * Adds ALL types of numbers dynamically.
-     * Auto-detects each input as integer (int/long) or decimal (float/double/BigDecimal)
-     * and performs smart type promotion:
-     *   - all integers    -> int  (or long if any value exceeds int range)
-     *   - any decimal     -> double (or BigDecimal if high precision required / detected)
-     */
-    private static Number addAllNumbers(List<String> rawInputs) {
+    private static Number addAllNumbers(List<String> rawInputs) 
+    {
         boolean hasDecimal = false;
         boolean hasBigDecimal = false;
         boolean needsLong = false;
-
         List<Number> parsed = new ArrayList<>();
-        for (String raw : rawInputs) {
-            // Try integer first
-            if (isInteger(raw)) {
+        for (String raw : rawInputs) 
+        {
+            if (isInteger(raw)) 
+            {
                 long longValue = Long.parseLong(raw);
-                if (longValue < Integer.MIN_VALUE || longValue > Integer.MAX_VALUE) {
+                if (longValue < Integer.MIN_VALUE || longValue > Integer.MAX_VALUE) 
+                {
                     needsLong = true;
                 }
                 parsed.add(longValue);
                 continue;
             }
-
-            try {
-                // Try as double
+            try 
+            {
                 double doubleValue = Double.parseDouble(raw);
                 hasDecimal = true;
-
-                // Detect if high-precision BigDecimal is more appropriate
-                if (isHighPrecisionDecimal(raw)) {
+                if (isHighPrecisionDecimal(raw)) 
+                {
                     hasBigDecimal = true;
-                    // Keep the raw string so we can re-parse exactly as BigDecimal
-                    parsed.add(BigDecimal.ZERO); // placeholder, replaced in BigDecimal path
-                } else {
+                    parsed.add(BigDecimal.ZERO);
+                }
+                else 
+                {
                     parsed.add(doubleValue);
                 }
-            } catch (NumberFormatException e2) {
+            } 
+            catch (NumberFormatException e2) 
+            {
                 System.out.println("Skipping invalid number: \"" + raw + "\" (not a valid numeric value)");
             }
         }
-
-        // Use BigDecimal if any high-precision decimals were detected -
-        // re-parse the ORIGINAL raw strings to avoid double precision loss
-        if (hasBigDecimal) {
+        if (hasBigDecimal) 
+        {
             return addBigDecimals(rawInputs);
         }
-
         Number result = hasDecimal ? 0.0 : 0;
-
-        for (Number num : parsed) {
+        for (Number num : parsed) 
+        {
             result = add(result, num);
         }
-
-        // If result is integral but started as integers, cast appropriately
-        if (!hasDecimal) {
-            if (needsLong) {
+        if (!hasDecimal) 
+        {
+            if (needsLong) 
+            {
                 return result.longValue();
             }
             return result.intValue();
         }
         return result;
     }
-
-    /**
-     * Returns true if the raw string is a valid integer (optionally signed).
-     */
-    private static boolean isInteger(String raw) {
-        try {
+    private static boolean isInteger(String raw) 
+    {
+        try 
+        {
             Long.parseLong(raw);
             return true;
-        } catch (NumberFormatException e) {
+        } 
+        catch (NumberFormatException e) 
+        {
             return false;
         }
     }
-
-    /**
-     * Detects whether a raw decimal string needs BigDecimal precision
-     * (e.g., more than 15 significant digits or a very large exponent).
-     */
-    private static boolean isHighPrecisionDecimal(String raw) {
+    private static boolean isHighPrecisionDecimal(String raw) 
+    {
         String s = raw.toLowerCase().replaceFirst("^[+-]", "");
-        // Remove exponent part for digit counting
         String mantissa = s.contains("e") ? s.substring(0, s.indexOf('e')) : s;
         String digitsOnly = mantissa.replace(".", "");
         return digitsOnly.length() > 15;
     }
-
-    /**
-     * Adds using BigDecimal for high-precision decimal arithmetic.
-     * Parses the ORIGINAL raw strings directly to avoid any precision loss.
-     */
-    private static BigDecimal addBigDecimals(List<String> rawInputs) {
+    private static BigDecimal addBigDecimals(List<String> rawInputs) 
+    {
         BigDecimal result = BigDecimal.ZERO;
-        for (String raw : rawInputs) {
-            try {
+        for (String raw : rawInputs) 
+        {
+            try 
+            {
                 result = result.add(new BigDecimal(raw.trim()));
-            } catch (NumberFormatException e) {
+            } 
+            catch (NumberFormatException e) 
+            {
                 System.out.println("Skipping invalid number: \"" + raw + "\" (not a valid numeric value)");
             }
         }
         return result;
     }
-
-    // ============================================================
-    // Overloaded add(...) methods - one for every type of number
-    // ============================================================
-
-    public static int add(int a, int b) {
+    private static void printFormattedResult(Number sum) 
+    {
+        System.out.println("\n----------------------------------------");
+        System.out.println("actual output => SUM  = " + sum);
+        System.out.println("----------------------------------------");
+        System.out.println("int    : " + sum.intValue());
+        System.out.println("long   : " + sum.longValue());
+        System.out.println("float  : " + sum.floatValue());
+        System.out.println("double : " + sum.doubleValue());
+        System.out.println("decimal: " + (sum instanceof BigDecimal ? sum : new BigDecimal(sum.toString())));
+        System.out.println("----------------------------------------");
+        System.out.println("Sum type     : " + sum.getClass().getSimpleName());
+        System.out.println("Integer sum? : " + (sum instanceof Integer || sum instanceof Long));
+        System.out.println("Decimal sum? : " + (sum instanceof Float || sum instanceof Double || sum instanceof BigDecimal));
+    }
+    public static int add(int a, int b) 
+    {
         return a + b;
     }
-
-    public static long add(long a, long b) {
+    public static long add(long a, long b) 
+    {
         return a + b;
     }
-
-    public static float add(float a, float b) {
+    public static float add(float a, float b) 
+    {
         return a + b;
     }
-
-    public static double add(double a, double b) {
+    public static double add(double a, double b) 
+    {
         return a + b;
     }
-
-    public static BigDecimal add(BigDecimal a, BigDecimal b) {
+    public static BigDecimal add(BigDecimal a, BigDecimal b) 
+    {
         return a.add(b);
     }
-
-    // ---- Smart promotion overloads for mixed types ----
-
-    public static long add(int a, long b) {
+    public static long add(int a, long b) 
+    {
         return a + b;
     }
-
-    public static long add(long a, int b) {
+    public static long add(long a, int b) 
+    {
         return a + b;
     }
-
-    public static double add(int a, double b) {
+    public static double add(int a, double b) 
+    {
         return a + b;
     }
-
-    public static double add(double a, int b) {
+    public static double add(double a, int b) 
+    {
         return a + b;
     }
-
-    public static double add(long a, double b) {
+    public static double add(long a, double b) 
+    {
         return a + b;
     }
-
-    public static double add(double a, long b) {
+    public static double add(double a, long b) 
+    {
         return a + b;
     }
-
-    public static double add(float a, double b) {
+    public static double add(float a, double b) 
+    {
         return a + b;
     }
-
-    public static double add(double a, float b) {
+    public static double add(double a, float b) 
+    {
         return a + b;
     }
-
-    public static float add(int a, float b) {
+    public static float add(int a, float b) 
+    {
         return a + b;
     }
-
-    public static float add(float a, int b) {
+    public static float add(float a, int b) 
+    {
         return a + b;
     }
-
-    public static float add(long a, float b) {
+    public static float add(long a, float b) 
+    {
         return a + b;
     }
-
-    public static float add(float a, long b) {
+    public static float add(float a, long b) 
+    {
         return a + b;
     }
-
-    /**
-     * Generic dispatcher: combines two Numbers using the widest type promotion.
-     * Used internally to add a running total with each parsed input.
-     */
-    private static Number add(Number a, Number b) {
+    private static Number add(Number a, Number b) 
+    {
         boolean aIsDecimal = isDecimalType(a);
         boolean bIsDecimal = isDecimalType(b);
-
-        if (!aIsDecimal && !bIsDecimal) {
-            // Both integers -> long to avoid overflow
+        if (!aIsDecimal && !bIsDecimal) 
+        {
             long sum = a.longValue() + b.longValue();
-            if (sum >= Integer.MIN_VALUE && sum <= Integer.MAX_VALUE) {
+            if (sum >= Integer.MIN_VALUE && sum <= Integer.MAX_VALUE) 
+            {
                 return (int) sum;
             }
             return sum;
         }
-
-        if (isFloatType(a) && isFloatType(b)) {
+        if (isFloatType(a) && isFloatType(b)) 
+        {
             return a.floatValue() + b.floatValue();
         }
-
-        // Fall back to double for mixed decimal types
         return a.doubleValue() + b.doubleValue();
     }
-
-    private static boolean isDecimalType(Number n) {
+    private static boolean isDecimalType(Number n) 
+    {
         return n instanceof Float || n instanceof Double || n instanceof BigDecimal;
     }
-
-    private static boolean isFloatType(Number n) {
+    private static boolean isFloatType(Number n) 
+    {
         return n instanceof Float;
     }
 }
-
